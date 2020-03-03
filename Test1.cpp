@@ -41,8 +41,11 @@ int main()
     cin >> n;
     while (n--) {
         cin >> mp.first >> mp.second;
-        sm = mp;
-        cout << ms.first << " " << ms.second << endl;
+        sm = mp;multiset<pair<int, int>, My_less>::iterator p;
+        pair<int, int> p2;
+        p = ms.begin();
+        p2 = *p;
+        cout << p2.first << " " << p2.second << endl;
         ms.insert(mp);
     }
     
