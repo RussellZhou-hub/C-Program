@@ -23,7 +23,14 @@ public:
 };
 my_type My_less::sm;
 
-
+void my_sort(multiset<pair<int, int>, My_less>::iterator s,
+    multiset<pair<int, int>, My_less>::iterator e,
+    multiset<pair<int, int>, My_less> & d
+) {
+    for (; s != e; s++) {
+        d.insert(*s);
+    }
+}
 
 
 int main()
@@ -45,12 +52,17 @@ int main()
         tmp_sm = tmp;
         ms.insert(mp); //新手成为会员
         multiset<pair<int, int>, My_less>::iterator p;
-        pair<int, int> p2;
-        p = ms.begin();
-        p2 = *p;
-        cout << tmp.first << " "<<p2.first<<endl;
+        pair<int, int> p3;
+        multiset<pair<int, int>, My_less> ms_tmp;
+        my_sort(ms.begin(), ms.end(), ms_tmp);
+        p = ms_tmp.begin();
+
+        p3 = *p;
+        cout << tmp.first << " "<<p3.first<<endl;
         mp = tmp;
     }
+
+    
     
     return 0;
 }
