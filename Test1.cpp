@@ -42,7 +42,7 @@ int main()
     while (n--) {
         cin >> mp.first >> mp.second;
         sm = mp;
-        cout << mp.first << " " << mp.second << endl;
+        cout << ms.first << " " << ms.second << endl;
         ms.insert(mp);
     }
     
