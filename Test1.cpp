@@ -25,6 +25,7 @@ my_type My_less::sm;
 
 
 
+
 int main()
 {
     int n;
@@ -36,17 +37,19 @@ int main()
     tmp_sm.first = 1;
     tmp_sm.second = 1000000000;
     multiset<pair<int, int>, My_less> ms;
-    ms.insert(tmp_sm);
+    mp = tmp_sm;
     cin >> n;
     while (n--) {
-        cin >> mp.first >> mp.second;
-        tmp_sm = mp;
+        my_type tmp;
+        cin >> tmp.first >> tmp.second;
+        tmp_sm = tmp;
+        ms.insert(mp); //新手成为会员
         multiset<pair<int, int>, My_less>::iterator p;
         pair<int, int> p2;
         p = ms.begin();
         p2 = *p;
-        cout << mp.first << " "<<p2.first<<endl;
-        ms.insert(mp);                    //新手成为会员
+        cout << tmp.first << " "<<p2.first<<endl;
+        mp = tmp;
     }
     
     return 0;
