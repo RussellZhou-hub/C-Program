@@ -30,9 +30,13 @@ int main()
 
     m.insert(tmp);
 
-    cin >> n;
+    //cin >> n;
+    scanf("%d", &n);
+
     while (n--) {
-        cin >> tmp.first >> tmp.second;
+        //cin >> tmp.first >> tmp.second;
+        scanf("%d %d", &tmp.first, &tmp.second);
+
         m.insert(tmp);
         
         set<mt, My_less<int>>::iterator t;
@@ -45,12 +49,14 @@ int main()
         if (t == m.begin()) {
             right = ++t;
             mt_tmp = *right;
-            cout << tmp.first << " " << mt_tmp.first << endl;
+            //cout << tmp.first << " " << mt_tmp.first << endl;
+            printf("%d %d\n", tmp.first, mt_tmp.first);
         }
         else if (t == m.end()) {
             left = --t;
             mt_tmp = *left;
-            cout << tmp.first << " " << mt_tmp.first << endl;
+            //cout << tmp.first << " " << mt_tmp.first << endl;
+            printf("%d %d\n", tmp.first, mt_tmp.first);
         }
         else {
             right = ++t;
@@ -61,8 +67,14 @@ int main()
             mt_tmp = *t;
             b = *right;
             a = *left;
-            if(b.second-mt_tmp.second<mt_tmp.second-a.second) cout << tmp.first << " " << b.first << endl;
-            else cout << tmp.first << " " << a.first << endl;
+            if (b.second - mt_tmp.second < mt_tmp.second - a.second) {
+                //cout << tmp.first << " " << b.first << endl;
+                printf("%d %d\n", tmp.first, b.first);
+            }
+            else {
+                //cout << tmp.first << " " << a.first << endl;
+                printf("%d %d\n", tmp.first, a.first);
+            }
         }
     }
     return 0;
