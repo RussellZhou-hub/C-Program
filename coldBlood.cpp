@@ -32,52 +32,9 @@ public:
     }
 };
 
-/*
-intPair myOut[1002];
-intPair myIn[1002];
-
-
-void writeIn() {
-    int a, b;
-    cout << "1000\n";
-    for (auto i = 0; i < 1000; i++) {
-        cin >> a >> b;
-        cout << myIn[i].first << " " << myIn[i].second << "\n";
-        if ( a!= myOut[i].first) {
-            cout << "\n\nline:" << i + 1 << "newb id wrong";
-            if (b != myOut[i].second) {
-                cout << "      line:" << i + 1 << "veteran id wrong" << "\n\n";
-            }
-        }
-    }
-}
-
-void check( ) {
-    int a, b;
-    for (auto i = 0; i < 1000; i++) {
-        cin >> a >> b;
-        cout << myOut[i].first << " " << myOut[i].second << "\n";
-        if (a != myOut[i].first) {
-            cout << "\nline:" << i + 1 << "newb id wrong";
-            if (b != myOut[i].second) {
-                cout << "      line:" << i + 1 << "veteran id wrong" << "\n";
-            }
-        }
-    }
-}
-
-*/
 
 int main()
 {
-    /*
-    ifstream in("In.txt");
-    cin.rdbuf(in.rdbuf());
-    ofstream out("myIn.txt");
-    cout.rdbuf(out.rdbuf());
-    */
-    
-            //测试
     int n;
     //int nOut;
     multiset<intPair,My_less<intPair>>  m;       //按能力值排
@@ -86,19 +43,11 @@ int main()
     tmp.first = 1;
     tmp.second = 1000000000;
     m.insert(tmp);
-    //cin >> n;
-
-
-    //nOut = 0;
     scanf("%d", &n);
     while (n--) {
         multiset<intPair, My_less_2<intPair>>  m_2;          //按id排序
         //cin >> tmp.first >> tmp.second;
         scanf("%d%d", &tmp.first, &tmp.second);
-
-        //myIn[nOut].first = tmp.first;
-        //myIn[nOut].second = tmp.second;
-
         m.insert(tmp);
         multiset<intPair, My_less<intPair>>::iterator t;
         multiset<intPair, My_less<intPair>>::iterator right;
@@ -152,37 +101,8 @@ int main()
         intPair rival;
         rival = *m_2.begin();
         printf("%d %d\n", intPair_tmp.first, rival.first);
-        //myOut[nOut].first = intPair_tmp.first;
-       //myOut[nOut].second = rival.first;
-        //nOut++;
-
-        
     }
 
-    /*
-
-    ifstream in2("out.txt");
-    cin.rdbuf(in2.rdbuf());
-    writeIn();
-
-    ifstream in3("out.txt");
-    cin.rdbuf(in3.rdbuf());
-    ofstream out2("myOut.txt");
-    cout.rdbuf(out2.rdbuf());
-    check();
-    
-    */
-    
     return 0;
 }
 
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
