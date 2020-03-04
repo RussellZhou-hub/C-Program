@@ -2,7 +2,9 @@
 //
 
 #include <iostream>
+#include<iomanip>
 #include<map>
+#include<cstdlib>
 #include<set>
 
 
@@ -19,64 +21,62 @@ public:
      }
 };
 
+
+
+
 int main()
 {
     int n;
     set<mt,My_less<mt>>  m;
     mt tmp;
-
     tmp.first = 1;
     tmp.second = 1000000000;
-
     m.insert(tmp);
-
-    //cin >> n;
     scanf("%d", &n);
-
     while (n--) {
         //cin >> tmp.first >> tmp.second;
-        scanf("%d %d", &tmp.first, &tmp.second);
-
+        scanf("%d%d", &tmp.first, &tmp.second);
         m.insert(tmp);
-        
         set<mt, My_less<int>>::iterator t;
         set<mt, My_less<int>>::iterator right;
         set<mt, My_less<int>>::iterator left;
         mt mt_tmp;
-
         t = m.find(tmp);
-
         if (t == m.begin()) {
             right = ++t;
             mt_tmp = *right;
             //cout << tmp.first << " " << mt_tmp.first << endl;
             printf("%d %d\n", tmp.first, mt_tmp.first);
         }
-        else if (t == m.end()) {
+        else if (t == --m.end()) {
             left = --t;
             mt_tmp = *left;
             //cout << tmp.first << " " << mt_tmp.first << endl;
-            printf("%d %d\n", tmp.first, mt_tmp.first);
+            printf("%d %d\n",tmp.first, mt_tmp.first);
         }
         else {
             right = ++t;
-            t = m.find(tmp);
+            --t;
             left = --t;
+            ++t;
             mt a,b;
-            t = m.find(tmp);
             mt_tmp = *t;
             b = *right;
             a = *left;
             if (b.second - mt_tmp.second < mt_tmp.second - a.second) {
                 //cout << tmp.first << " " << b.first << endl;
                 printf("%d %d\n", tmp.first, b.first);
+
             }
-            else {
-                //cout << tmp.first << " " << a.first << endl;
+            else { //cout << tmp.first << " " << a.first << endl;
                 printf("%d %d\n", tmp.first, a.first);
             }
+
         }
     }
+
+    
+    
     return 0;
 }
 
