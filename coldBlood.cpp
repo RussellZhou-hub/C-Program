@@ -35,10 +35,9 @@ public:
 
 int main()
 {
-    int n;
-    //int nOut;
-    multiset<intPair,My_less<intPair>>  m;       //按能力值排
     
+    int n;
+    multiset<intPair,My_less<intPair>>  m;       //按能力值排
     intPair tmp;
     tmp.first = 1;
     tmp.second = 1000000000;
@@ -49,12 +48,12 @@ int main()
         //cin >> tmp.first >> tmp.second;
         scanf("%d%d", &tmp.first, &tmp.second);
         m.insert(tmp);
-        multiset<intPair, My_less<intPair>>::iterator t;
+        multiset<intPair, My_less<intPair>>::iterator t;      
         multiset<intPair, My_less<intPair>>::iterator right;
         multiset<intPair, My_less<intPair>>::iterator left;
-        intPair intPair_tmp,a,b;
+        intPair intPair_tmp;
         t = m.find(tmp);
-        intPair_tmp = *t;
+        intPair_tmp = *t;             //查找新手的位置
         if (t == m.begin()) {
             right = ++t;
             int intTMP = (*right).second - intPair_tmp.second;
@@ -89,10 +88,10 @@ int main()
             }
             else if((*right).second - intPair_tmp.second == intPair_tmp.second - (*left).second) {
                 int intTMP = (*right).second - intPair_tmp.second;
-                do {
+                do {                                                   //向前
                     m_2.insert(*left);
                 } while (left != m.begin() && (intPair_tmp.second - (*(--left)).second) == intTMP);
-                while (right != m.end() && ((*right).second - intPair_tmp.second) == intTMP) {
+                while (right != m.end() && ((*right).second - intPair_tmp.second) == intTMP) {        //向后
                     m_2.insert(*(right++));
                 }
             }
@@ -102,7 +101,5 @@ int main()
         rival = *m_2.begin();
         printf("%d %d\n", intPair_tmp.first, rival.first);
     }
-
     return 0;
 }
-
