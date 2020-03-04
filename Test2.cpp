@@ -19,26 +19,29 @@ public:
      }
 };
 
-
-
-
 int main()
 {
     int n;
     set<mt,My_less<mt>>  m;
     mt tmp;
+
     tmp.first = 1;
     tmp.second = 1000000000;
+
     m.insert(tmp);
+
     cin >> n;
     while (n--) {
         cin >> tmp.first >> tmp.second;
         m.insert(tmp);
+        
         set<mt, My_less<int>>::iterator t;
         set<mt, My_less<int>>::iterator right;
         set<mt, My_less<int>>::iterator left;
         mt mt_tmp;
+
         t = m.find(tmp);
+
         if (t == m.begin()) {
             right = ++t;
             mt_tmp = *right;
@@ -62,9 +65,6 @@ int main()
             else cout << tmp.first << " " << a.first << endl;
         }
     }
-
-    
-    
     return 0;
 }
 
