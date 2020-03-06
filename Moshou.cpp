@@ -84,12 +84,12 @@ public:
 			available = 0;
 			used = false;
 		}
-		Info(int a,bool u) {
+		Info(int a,bool u=false) {
 			available = a;
 			used = u;
 		}
-		bool operator<(Info& info) {
-			if (this->used == true && info.used == false) return true;        //用过的排使用顺序前面
+		friend bool operator<(const Info & info,const Info & info2) {
+			if (info.used == true && info2.used == false) return true;        //用过的排使用顺序前面
 			return false;
 		}
 	};
@@ -112,17 +112,17 @@ public:
 			attack_effect = 3;
 		}
 	}
-	void gain() {
+	void gain() {                     //获得武器时
 		if (id == 0) {
-			
-			size++;
+			msetInfo.insert(Info( 3) );
 		}
 		else if(id == 1) {
-
+			msetInfo.insert(Info(1));
 		}
 		else if (id == 2) {
-
+			msetInfo.insert(Info(2));
 		}
+		size++;
 	}
 };
 
@@ -131,8 +131,10 @@ class Soldier {                                //战士
 public:
 	static int redNumSoldier;
 	static int blueNumSoldier;
+	bool reachHeadQ = false;                  //达到 对方司令部标志位
 	int element,force,id,city,color,index;     //0代表红1代表蓝
-	
+	string colorToName[2] = { "red","blue" };
+	string indexToName[5] = { "dragon","ninja","iceman","lion","wolf" };
 	Weapon weapon[3];       //拥有武器情况
 	Soldier() = default;
 	Soldier(int ele,int f,int color_tmp){
@@ -164,6 +166,16 @@ public:
 };
 int Soldier::redNumSoldier = 0;
 int Soldier::blueNumSoldier = 0;
+
+template<class T>
+class LessByCity {          //同一时间发生的事件，按发生地点从西向东依次输出..对于同一城市，同一时间发生的事情，先输出红方的，后输出蓝方的。
+public:
+	bool operator()(const T & a,const T & b) {
+		if ((a->city) < (b->city) || (a->city) == (b->city) && (a->color) < (b->color)) return true;
+		else return false;
+	}
+};
+
 
 class Dragon:public Soldier {             //龙战士
 public:
@@ -212,6 +224,10 @@ public:
 			blueNumNinja++;
 		}
 		index = 1;
+		int weaponID = id % 3;   //编号为n的ninja降生时即获得编号为n%3和(n+1) 的武器
+		weapon[weaponID].gain();
+		weaponID = (id+1) % 3;
+		weapon[weaponID].gain();
 	}
 	~Ninja() {
 		if (color == 0) {
@@ -241,6 +257,8 @@ public:
 			blueNumIceman++;
 		}
 		index = 2;
+		int weaponID = id % 3;   //编号为n的iceman降生时即获得编号为n%3 的武器
+		weapon[weaponID].gain();
 	}
 	~Iceman() {
 		if (color == 0) {
@@ -272,6 +290,8 @@ public:
 			blueNumLion++;
 		}
 		index = 3;
+		int weaponID = id % 3;   //编号为n的lion降生时即获得编号为n%3 的武器
+		weapon[weaponID].gain();
 	}
 	~Lion() {
 		if (color == 0) {
@@ -352,8 +372,7 @@ int main()
 		cout << "Case:" << k << endl;
 		HeadQuarter redQuarter(0);
 		HeadQuarter blueQuarter(1);
-		vector<Soldier*> redSoldier;
-		vector<Soldier*> blueSoldier;
+		vector<Soldier*> allSoldier;         //全部战士容器
 		cin >> M >> N >> K >> T;
 		redQuarter.redElement = M;                 //司令部初始生命元
 		blueQuarter.blueElement = M;
@@ -374,118 +393,117 @@ int main()
 				int index;
 				index=redQuarter.generate();
 				if (index == 0) {
-					redSoldier.push_back(new Dragon(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
+					allSoldier.push_back(new Dragon(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
 				}
 				else if (index == 1) {
-					redSoldier.push_back(new Ninja(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
+					allSoldier.push_back(new Ninja(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
 				}
 				else if (index == 2) {
-					redSoldier.push_back(new Iceman(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
+					allSoldier.push_back(new Iceman(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
 				}
 				else if (index == 3) {
-					redSoldier.push_back(new Lion(redQuarter.iniElement[index], redQuarter.iniForce[index], 0,redQuarter.redElement) );
+					allSoldier.push_back(new Lion(redQuarter.iniElement[index], redQuarter.iniForce[index], 0,redQuarter.redElement) );
 				}
 				else if (index == 4) {
-					redSoldier.push_back(new Wolf(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
+					allSoldier.push_back(new Wolf(redQuarter.iniElement[index], redQuarter.iniForce[index], 0));
 				}
 				if (index != -1) {
-					cout << timeToString(minute) << " red " << redQuarter.indexToName[index] << " " << (*redSoldier.back()).id << " born\n";
-					if (index == 3) {
-						vector<Soldier*>::iterator S_it;
-						S_it = redSoldier.end();
-						S_it--;
-						cout << "Its loyalty is " << (*S_it)->getLoyalty() << "\n";
-					}
+					cout << timeToString(minute) << " red " << redQuarter.indexToName[index] << " " << (*allSoldier.back()).id << " born\n";
+					if (index == 3)   cout << "Its loyalty is " << allSoldier.back()->getLoyalty() << "\n";
 				}
 				index = blueQuarter.generate();
 				if (index == 0) {
-					blueSoldier.push_back(new Dragon(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
+					allSoldier.push_back(new Dragon(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
 				}
 				else if (index == 1) {
-					blueSoldier.push_back(new Ninja(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
+					allSoldier.push_back(new Ninja(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
 				}
 				else if (index == 2) {
-					blueSoldier.push_back(new Iceman(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
+					allSoldier.push_back(new Iceman(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
 				}
 				else if (index == 3) {
-					blueSoldier.push_back(new Lion(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1,blueQuarter.blueElement) );
+					allSoldier.push_back(new Lion(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1,blueQuarter.blueElement) );
 				}
 				else if (index == 4) {
-					blueSoldier.push_back(new Wolf(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
+					allSoldier.push_back(new Wolf(blueQuarter.iniElement[index], blueQuarter.iniForce[index], 1));
 				}
 				if (index != -1) {
-					cout << timeToString(minute) << " blue " << blueQuarter.indexToName[index] << " " << (*blueSoldier.back()).id << " born\n";
-					if (index == 3) {
-						vector<Soldier*>::iterator S_it;
-						S_it = blueSoldier.end();
-						S_it--;
-						cout << "Its loyalty is " << (*S_it)->getLoyalty() << "\n";
-					}
+					cout << timeToString(minute) << " blue " << blueQuarter.indexToName[index] << " " << (*allSoldier.back()).id << " born\n";
+					if (index == 3)   cout << "Its loyalty is " << allSoldier.back()->getLoyalty() << "\n";
 				}
 			}
 			if (minute % 60 == 5) {             //lion逃跑
 				vector<Soldier*>::iterator S_it;
-				S_it = redSoldier.begin();
-				for (; S_it != redSoldier.end(); S_it++) {
-					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <=0 && (*S_it)->city!=N+1 ) {                 //不在对方司令部，忠诚度<=0
+				LessByCity<Soldier*> myLess;
+				sort(allSoldier.begin(), allSoldier.end(), myLess);          //先排序
+				S_it = allSoldier.begin();
+				for (; S_it != allSoldier.end(); S_it++) {
+					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <=0 && (*S_it) ->color==0 && (*S_it)->city!=N+1 ) {                 //不在对方司令部，忠诚度<=0
 						cout << timeToString(minute) << " red lion " << (*S_it)->id << " ran away\n";
 						vector<Soldier*>::iterator tmp_it;
 						tmp_it = S_it;
 						(*tmp_it)->~Soldier();
-						redSoldier.erase(tmp_it);
+						allSoldier.erase(tmp_it);
 					}
 				}
-				S_it = blueSoldier.begin();
-				for (; S_it != blueSoldier.end(); S_it++) {                          
-					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <= 0 && (*S_it)->city != 0) {        //不在对方司令部，忠诚度<=0
+				for (; S_it != allSoldier.end(); S_it++) {                          
+					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <= 0 && (*S_it)->color == 1 && (*S_it)->city != 0) {        //不在对方司令部，忠诚度<=0
 						cout << timeToString(minute) << " blue lion " << (*S_it)->id << " ran away\n";
 						vector<Soldier*>::iterator tmp_it;
 						tmp_it = S_it;
 						(*tmp_it)->~Soldier();
-						blueSoldier.erase(tmp_it);
+						allSoldier.erase(tmp_it);
 					}
 				}
 			}
 			if (minute % 60 == 10) {             //前进
+				LessByCity<Soldier*> myLess;
 				vector<Soldier*>::iterator S_it;
-				S_it = redSoldier.begin();
-				for (; S_it != redSoldier.end(); S_it++) {
-					if ((*S_it)->city != N + 1) {      //还没到对方司令部
+				S_it = allSoldier.begin();
+				for (; S_it != allSoldier.end(); S_it++) {
+					if ((*S_it)->city != N + 1 && (*S_it)->reachHeadQ==false ) {      //还没到对方司令部
 						(*S_it)->city++;
-						if ((*S_it)->city != N + 1) {
-							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
-							cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
-						}
-						else if ((*S_it)->city == N + 1) {
-							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
-							cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached blue headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
-							cout << timeToString(minute) << " blue headquarter was taken\n";
-							gameover = true;
-						}
+						if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
+						if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 					}
 				}
-				S_it = blueSoldier.begin();
-				for (; S_it != blueSoldier.end(); S_it++) {
-					if ((*S_it)->city != 0) {      //还没到对方司令部
+				allSoldier.assign(allSoldier.begin(),allSoldier.end());
+				S_it = allSoldier.begin();
+				for (; S_it != allSoldier.end(); S_it++) {
+					if ((*S_it)->city != 0 && (*S_it)->reachHeadQ == false ) {      //还没到对方司令部
 						(*S_it)->city--;
-						if ((*S_it)->city != 0) {
-							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
-							cout << timeToString(minute) << " " << "blue " << blueQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
-						}
-						else if ((*S_it)->city == 0) {
-							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
-							cout << timeToString(minute) << " " << "blue " << blueQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached red headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
-							cout << timeToString(minute) << " red headquarter was taken\n";
-							gameover = true;
-						}
+						if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
+						if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
+					}
+				}
+				allSoldier.insert(allSoldier.end(),allSoldier.begin(), allSoldier.end());
+				sort(allSoldier.begin(), allSoldier.end(), myLess);        //前进完后排序
+				S_it = allSoldier.begin();
+				for (; S_it != allSoldier.end(); S_it++) {
+					if ( (*S_it)->color==0 && (*S_it)->city != N + 1) {      //还没到对方司令部
+						cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
+					}
+					else if ((*S_it)->color == 0 && (*S_it)->city == N + 1 && (*S_it)->reachHeadQ == false ) {
+						cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached blue headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
+						cout << timeToString(minute) << " blue headquarter was taken\n";
+						(*S_it)->reachHeadQ = true;
+						gameover = true;
+					}
+					else if ((*S_it)->color == 1 && (*S_it)->city != 0) {     //还没到对方司令部
+						cout << timeToString(minute) << " " << "blue " << blueQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
+					}
+					else if ((*S_it)->color == 1 && (*S_it)->city == 0 && (*S_it)->reachHeadQ == false) {
+						cout << timeToString(minute) << " " << "blue " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached blue headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
+						cout << timeToString(minute) << " red headquarter was taken\n";
+						(*S_it)->reachHeadQ = true;
+						gameover = true;
 					}
 				}
 			}
 			if (minute % 60 == 35 && !gameover) {              //wolf抢夺武器
+				LessByCity<Soldier*> myLess;
+				sort(allSoldier.begin(), allSoldier.end(), myLess);            //先排序 
+
 
 			}
 			if (minute % 60 == 40 && !gameover ) {              //战斗
@@ -496,9 +514,17 @@ int main()
 				cout << timeToString(minute) << " " << blueQuarter.blueElement << " " << "elements in blue headquarter\n";
 			}
 			if (minute % 60 == 55 && !gameover) {              //武士报告拥有武器情况
-
+				vector<Soldier*>::iterator it_start, it_end;
+				LessByCity<Soldier*> myLess;
+				sort(allSoldier.begin(), allSoldier.end(),myLess);
+				it_start = allSoldier.begin();
+				it_end = allSoldier.end();
+				for (; it_start != it_end; it_start++) {
+					cout << timeToString(minute) << " " << (*it_start)->colorToName[(*it_start)->color] << " " << (*it_start)->indexToName[(*it_start)->index] << " ";
+					cout << (*it_start)->id << " has ";
+					cout<< (*it_start)->weapon[0].size<< " sword "<< (*it_start)->weapon[1].size<<" bomb "<< (*it_start)->weapon[2].size<<" arrow and "<< (*it_start)->element<< " elements\n";
+				}
 			}
-
 
 		}
 	}
