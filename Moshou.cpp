@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
+#include<set>
 
 
 using namespace std;
@@ -41,8 +42,8 @@ class HeadQuarter {
 public:
 	static int redElement, blueElement;                 //司令部生命元
 	int color;                                     //0红1蓝
-	int iniElement[5];
-	int iniForce[5];
+	int iniElement[5] = {0,0,0,0,0};
+	int iniForce[5]= { 0,0,0,0,0 };
 	string indexToName[5] = { "dragon","ninja","iceman","lion","wolf" };
 	HeadQuarter(int col) {
 		color = col;
@@ -70,19 +71,72 @@ public:
 	}
 };
 int HeadQuarter::redElement = 0;
-int HeadQuarter::blueElement = 0;                
+int HeadQuarter::blueElement = 0;    
+
+class Weapon {                            //武器类
+public:
+	int size,id,attack_effect;       //num该种武器数量
+	class Info {                      //武器信息类
+	public:
+		int available;
+		bool used;
+		Info() {
+			available = 0;
+			used = false;
+		}
+		Info(int a,bool u) {
+			available = a;
+			used = u;
+		}
+		bool operator<(Info& info) {
+			if (this->used == true && info.used == false) return true;        //用过的排使用顺序前面
+			return false;
+		}
+	};
+	
+	multiset<Info> msetInfo;     //每个该种剩余使用次数，最多10个武器,用过的排在前面
+	string idToName[3] = { "sword","bomb","arrow" };
+	Weapon() {
+		size = 0;        
+		attack_effect = 0;
+		id = 0;
+	}
+	void setId(int id_tmp) {
+		if (id_tmp == 0) {
+			attack_effect = 2;          //   该类武器最终攻击力==战士攻击力*attck_effect /10
+		}
+		if (id_tmp == 1) {
+			attack_effect = 4;
+		}
+		if (id_tmp == 2) {
+			attack_effect = 3;
+		}
+	}
+	void gain() {
+		if (id == 0) {
+			
+			size++;
+		}
+		else if(id == 1) {
+
+		}
+		else if (id == 2) {
+
+		}
+	}
+};
+
 
 class Soldier {                                //战士
 public:
 	static int redNumSoldier;
 	static int blueNumSoldier;
 	int element,force,id,city,color,index;     //0代表红1代表蓝
-	class Weapon {
-
-	};
-	Weapon weapon[3];       //拥有武器数量
+	
+	Weapon weapon[3];       //拥有武器情况
 	Soldier() = default;
-	Soldier(int ele,int f,int color_tmp) {
+	Soldier(int ele,int f,int color_tmp){
+		for (auto i = 0; i < 3; i++) weapon[i].setId(i);         //初始化武器id和攻击力
 		color = color_tmp;
 		if (color == 0) {
 			redNumSoldier++;
@@ -105,8 +159,8 @@ public:
 	virtual void take(Soldier* rival) {}
 	virtual void hurt(Soldier* rival) {}
 	virtual void move(){}
-	virtual int getLoyalty(){}
-	virtual int setLoyalty(int x) {}
+	virtual int getLoyalty() { return 1; }
+	virtual void setLoyalty(int x) { }
 };
 int Soldier::redNumSoldier = 0;
 int Soldier::blueNumSoldier = 0;
@@ -124,6 +178,8 @@ public:
 			blueNumDragon++;
 		}
 		index = 0;
+		int weaponID = id % 3;   //编号为n的dragon降生时即获得编号为n%3 的武器
+		weapon[weaponID].gain();
 	}
 	~Dragon() {
 		if (color == 0) {
@@ -228,7 +284,7 @@ public:
 	int getLoyalty() {
 		return loyalty;
 	}
-	int setLoyalty(int x) {
+	void setLoyalty(int x) {
 		loyalty = x;
 	}
 	void attack(Soldier* rival) {
@@ -267,7 +323,22 @@ public:
 int Wolf::redNumWolf = 0;
 int Wolf::blueNumWolf = 0;
 
-
+void init() {
+	  Dragon::redNumDragon = 0;
+	  Dragon::blueNumDragon = 0;
+	  Ninja::redNumNinja = 0;
+	  Ninja::blueNumNinja = 0;
+	  Iceman::redNumIceman = 0;
+	  Iceman::blueNumIceman = 0;
+	  Lion::redNumLion = 0;
+	  Lion::blueNumLion = 0;
+	  Wolf::redNumWolf = 0;
+	  Wolf::blueNumWolf = 0;
+	  HeadQuarter::redElement = 0;
+	  HeadQuarter::blueElement = 0;
+	  Soldier::redNumSoldier = 0;
+	  Soldier::blueNumSoldier = 0;
+}
 
 int main()
 {
@@ -276,6 +347,7 @@ int main()
 	cin >> n;
 
 	for (auto k = 1; k <= n; k++) {
+		init();
 		gameover = false;
 		cout << "Case:" << k << endl;
 		HeadQuarter redQuarter(0);
@@ -355,7 +427,7 @@ int main()
 				vector<Soldier*>::iterator S_it;
 				S_it = redSoldier.begin();
 				for (; S_it != redSoldier.end(); S_it++) {
-					if ((*S_it)->index == 3 && (*S_it)->getLoyalty<=0 && (*S_it)->city!=N+1 ) {                 //不在对方司令部，忠诚度<=0
+					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <=0 && (*S_it)->city!=N+1 ) {                 //不在对方司令部，忠诚度<=0
 						cout << timeToString(minute) << " red lion " << (*S_it)->id << " ran away\n";
 						vector<Soldier*>::iterator tmp_it;
 						tmp_it = S_it;
@@ -365,7 +437,7 @@ int main()
 				}
 				S_it = blueSoldier.begin();
 				for (; S_it != blueSoldier.end(); S_it++) {                          
-					if ((*S_it)->index == 3 && (*S_it)->getLoyalty <= 0 && (*S_it)->city != 0) {        //不在对方司令部，忠诚度<=0
+					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <= 0 && (*S_it)->city != 0) {        //不在对方司令部，忠诚度<=0
 						cout << timeToString(minute) << " blue lion " << (*S_it)->id << " ran away\n";
 						vector<Soldier*>::iterator tmp_it;
 						tmp_it = S_it;
@@ -382,12 +454,12 @@ int main()
 						(*S_it)->city++;
 						if ((*S_it)->city != N + 1) {
 							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty - K);     //忠诚减少
+							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 							cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 						}
 						else if ((*S_it)->city == N + 1) {
 							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty - K);     //忠诚减少
+							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 							cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached blue headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 							cout << timeToString(minute) << " blue headquarter was taken\n";
 							gameover = true;
@@ -400,12 +472,12 @@ int main()
 						(*S_it)->city--;
 						if ((*S_it)->city != 0) {
 							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty - K);     //忠诚减少
+							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 							cout << timeToString(minute) << " " << "blue " << blueQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 						}
 						else if ((*S_it)->city == 0) {
 							if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
-							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty - K);     //忠诚减少
+							if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 							cout << timeToString(minute) << " " << "blue " << blueQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached red headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 							cout << timeToString(minute) << " red headquarter was taken\n";
 							gameover = true;
