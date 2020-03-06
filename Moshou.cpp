@@ -329,9 +329,6 @@ public:
 			weapon[2].use();
 		}
 	}
-	void celebrate() {            //龙特有的
-
-	}
 };
 int Dragon::redNumDragon = 0;
 int Dragon::blueNumDragon = 0;
@@ -848,11 +845,15 @@ int main()
 						}
 						if (result == 0) {     //红杀死蓝 
 							(*r_it)->take(*b_it);
-
+							if ((*r_it)->index == 0) {
+								cout << timeToString(minute) <<" "<< (*r_it)->colorToName[(*r_it)->color] << " " << (*r_it)->indexToName[(*r_it)->index] << " "<< (*next_it)->id<<" yelled in city "<<city<<"\n";
+							}
 						}
 						else if (result == 1) {   //蓝杀死红
 							(*b_it)->take(*r_it);
-
+							if ((*b_it)->index == 0) {
+								cout << timeToString(minute) << " " << (*b_it)->colorToName[(*b_it)->color] << " " << (*b_it)->indexToName[(*b_it)->index] << " " << (*next_it)->id << " yelled in city " << city << "\n";
+							}
 						}
 						else if (result == 2) {    //都活
 							cout << timeToString(minute) << " both red " << (*r_it)->indexToName[(*r_it)->index] << " ";
