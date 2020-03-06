@@ -75,7 +75,7 @@ int HeadQuarter::blueElement = 0;
 
 class Weapon {                            //武器类
 public:
-	int size,id,attack_effect;       //num该种武器数量
+	int size,id,attack_effect;       //size该种武器数量
 	class Info {                      //武器信息类
 	public:
 		int available;
@@ -124,6 +124,14 @@ public:
 		}
 		size++;
 	}
+	void add(Info newWeapon) {
+		msetInfo.insert(newWeapon);
+		size++;
+	}
+	void sub() {         //优先减去没用过的
+		msetInfo.erase(--msetInfo.end());
+		size--;
+	}
 };
 
 
@@ -133,6 +141,7 @@ public:
 	static int blueNumSoldier;
 	bool reachHeadQ = false;                  //达到 对方司令部标志位
 	int element,force,id,city,color,index;     //0代表红1代表蓝
+	int takeInfo[3] = { 0,0,0 };              //夺取武器信息
 	string colorToName[2] = { "red","blue" };
 	string indexToName[5] = { "dragon","ninja","iceman","lion","wolf" };
 	Weapon weapon[3];       //拥有武器情况
@@ -157,8 +166,15 @@ public:
 		if (color == 0) redNumSoldier--;
 		else blueNumSoldier--;
 	}
+	int getTotalWeaponNum() {                //总共几件武器
+		int size=0;
+		for (auto i = 0; i < 3; i++) {
+			size += weapon[i].size;
+		}
+		return size;
+	}
 	virtual void attack(Soldier* rival){}
-	virtual void take(Soldier* rival) {}
+	virtual int* take(Soldier* rival) { return takeInfo; }
 	virtual void hurt(Soldier* rival) {}
 	virtual void move(){}
 	virtual int getLoyalty() { return 1; }
@@ -339,6 +355,92 @@ public:
 	void attack(Soldier* rival) {
 
 	}
+	int* take(Soldier* rival) {
+		for (auto i = 0; i < 3; i++) takeInfo[i] = 0;
+		bool taken = false;
+		int total = getTotalWeaponNum();
+		int rSword, rBomb, rArrow;
+		if (total == 10) return takeInfo;
+		rSword = rival->weapon[0].size;
+		rBomb = rival->weapon[1].size;
+		rArrow = rival->weapon[2].size;
+		if (total + rSword <= 10 && weapon[0].size+rSword <=10 ) {    //能将对手的sword全部夺取
+			takeInfo[0] = rSword;
+			multiset<Weapon::Info>::iterator it;
+			it = weapon[0].msetInfo.begin();
+			for (; it != weapon[0].msetInfo.end(); it++) {
+				weapon[0].add( *it );
+				rival->weapon[0].sub();
+			}
+			weapon[0].size += rSword;
+			total += rSword;
+			taken = true;
+		}
+		else if ( total + rSword <= 10 && weapon[0].size + rSword > 10) {    //只能夺取一部分
+			takeInfo[0] = rSword - (10 - weapon[0].size);
+			multiset<Weapon::Info>::iterator it;
+			it = --weapon[0].msetInfo.end();
+			for (auto i = 0; i < takeInfo[0];i++) {
+				weapon[0].add(*it);
+				rival->weapon[0].sub();
+				it--;
+			}
+			weapon[0].size += takeInfo[0];
+			total += takeInfo[0];
+			taken = true;
+		}
+		if (!taken &&  total + rBomb <= 10 && weapon[0].size + rSword <= 10) {    //能将对手的bomb全部夺取
+			takeInfo[1] = rBomb;
+			multiset<Weapon::Info>::iterator it;
+			it = weapon[1].msetInfo.begin();
+			for (; it != weapon[1].msetInfo.end(); it++) {
+				weapon[1].add(*it);
+				rival->weapon[1].sub();
+			}
+			weapon[1].size += rBomb;
+			total += rBomb;
+			taken = true;
+		}
+		else if (!taken && total + rBomb <= 10 && weapon[0].size + rSword > 10) {    //部分 对手的bomb夺取
+			takeInfo[1] = rBomb - (10 - weapon[1].size);
+			multiset<Weapon::Info>::iterator it;
+			it = --weapon[1].msetInfo.end();
+			for (auto i = 0; i < takeInfo[1]; i++) {
+				weapon[1].add(*it);
+				rival->weapon[1].sub();
+				it--;
+			}
+			weapon[1].size += takeInfo[1];
+			total += takeInfo[1];
+			taken = true;
+		}
+		if (!taken && total + rArrow <= 10 && weapon[2].size + rArrow <= 10) {    //能将对手的arrow全部夺取
+			takeInfo[2] = rArrow;
+			multiset<Weapon::Info>::iterator it;
+			it = weapon[2].msetInfo.begin();
+			for (; it != weapon[2].msetInfo.end(); it++) {
+				weapon[2].add(*it);
+				rival->weapon[2].sub();
+			}
+			weapon[2].size += rArrow;
+			total += rArrow;
+			taken = true;
+		}
+		else if (!taken && total + rArrow <= 10 && weapon[2].size + rArrow > 10) {    //只能夺取一部分arrow
+			takeInfo[2] = rArrow - (10 - weapon[2].size);
+			multiset<Weapon::Info>::iterator it;
+			it = --weapon[2].msetInfo.end();
+			for (auto i = 0; i < takeInfo[2]; i++) {
+				weapon[2].add(*it);
+				rival->weapon[2].sub();
+				it--;
+			}
+			weapon[2].size += takeInfo[2];
+			total += takeInfo[2];
+			taken = true;
+		}
+		return takeInfo;
+	}
 };
 int Wolf::redNumWolf = 0;
 int Wolf::blueNumWolf = 0;
@@ -503,11 +605,65 @@ int main()
 			if (minute % 60 == 35 && !gameover) {              //wolf抢夺武器
 				LessByCity<Soldier*> myLess;
 				sort(allSoldier.begin(), allSoldier.end(), myLess);            //先排序 
+				vector<Soldier*>::iterator S_it,next_it,tmp_it;
+				S_it = allSoldier.begin();
+				next_it = S_it;
+				next_it++;
+				for (; S_it != --allSoldier.end(); S_it++,next_it++) {
+					if ((*S_it)->reachHeadQ == false && (*S_it)->city == (*next_it)->city && (*S_it)->color != (*next_it)->color) {     //具备战斗发生条件
+						if ((*S_it)->index == 4 && (*next_it)->index != 4 && (*S_it) ->getTotalWeaponNum()<10 ) {     //狼抢武器条件
+							int* info;
+							info=(*S_it)->take(*next_it);          //调用抢夺函数
+							for (auto i = 0; i < 3; i++) {
+								if (info[i] != 0) {
+									cout << timeToString(minute) << " " << (*S_it)->colorToName[(*S_it)->color] << " " << (*S_it)->indexToName[(*S_it)->index] << " ";
+									cout << (*S_it)->id << " took " << info[i] << " " << (*S_it)->weapon[i].idToName[i] << " from ";
+									cout << (*next_it)->colorToName[(*next_it)->color] << " " << (*next_it)->indexToName[(*next_it)->index] << " ";
+									cout << (*next_it)->id << " in city " << (*next_it)->city<<"\n";
+								}
+							}
+							
+						}
+						else if ((*S_it)->index != 4 && (*next_it)->index == 4 && (*next_it)->getTotalWeaponNum() < 10) {     //狼抢武器条件
+							int* info;
+							info = (*next_it)->take(*S_it);          //调用抢夺函数
+							for (auto i = 0; i < 3; i++) {
+								if (info[i] != 0) {
+									cout << timeToString(minute) << " " << (*next_it)->colorToName[(*next_it)->color] << " " << (*next_it)->indexToName[(*next_it)->index] << " ";
+									cout << (*next_it)->id << " took " << info[i] << " " << (*next_it)->weapon[i].idToName[i] << " from ";
+									cout << (*S_it)->colorToName[(*S_it)->color] << " " << (*S_it)->indexToName[(*S_it)->index] << " ";
+									cout << (*S_it)->id << " in city " << (*S_it)->city << "\n";
+								}
+							}
+						}
+						tmp_it = next_it;
+						tmp_it++;
+						if (tmp_it == --allSoldier.end()) break;
+						else S_it++, next_it++;        //本次循环后移2位
+					}
 
+				}
 
 			}
 			if (minute % 60 == 40 && !gameover ) {              //战斗
+				LessByCity<Soldier*> myLess;
+				sort(allSoldier.begin(), allSoldier.end(), myLess);            //先排序 
+				vector<Soldier*>::iterator S_it, next_it, tmp_it;
+				S_it = allSoldier.begin();
+				next_it = S_it;
+				next_it++;
+				for (; S_it != --allSoldier.end(); S_it++, next_it++) {
+					if ((*S_it)->reachHeadQ == false && (*S_it)->city == (*next_it)->city && (*S_it)->color != (*next_it)->color) {     //具备战斗发生条件
 
+
+						tmp_it = next_it;
+						tmp_it++;
+						if (tmp_it == --allSoldier.end()) break;
+						else S_it++, next_it++;        //本次循环后移2位
+					}
+
+
+				}
 			}
 			if (minute % 60 == 50 && !gameover) {              //司令部报告生命元
 				cout << timeToString(minute) << " " << redQuarter.redElement << " " << "elements in red headquarter\n";
