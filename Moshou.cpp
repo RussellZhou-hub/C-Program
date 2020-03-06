@@ -133,10 +133,11 @@ public:
 		mvecInfo.push_back(newWeapon);
 		size++;
 	}
-	void sub() {         //优先减去没用过的
+	vector<Info>::iterator sub() {         //优先减去没用过的
 		wSort();
 		mvecInfo.erase(--mvecInfo.end());
 		size--;
+		return --mvecInfo.end();
 	}
 	void use() {
 		if (id == 1) {
@@ -208,6 +209,64 @@ public:
 	}
 	void hurt(int loss) {
 		element -= loss;
+	}
+	void take(Soldier* rival) {       //获胜后缴获
+		for (auto i = 0; i < 3; i++) takeInfo[i] = 0;
+		bool taken = false;
+		int total = getTotalWeaponNum();
+		int rSword, rBomb, rArrow;
+		if (total == 10) return;
+		rSword = rival->weapon[0].size;
+		rBomb = rival->weapon[1].size;
+		rArrow = rival->weapon[2].size;
+		if (total + rSword <= 10 && weapon[0].size + rSword <= 10) {    //能将对手的sword全部夺取
+			takeInfo[0] = rSword;
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
+			}
+			weapon[0].size += rSword;
+			total += rSword;
+		}
+		else if (total + rSword <= 10 && weapon[0].size + rSword > 10) {    //只能夺取一部分
+			takeInfo[0] = rSword - (10 - weapon[0].size);
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
+			}
+			weapon[0].size += takeInfo[0];
+			total += takeInfo[0];
+		}
+		if (  total + rBomb <= 10 && weapon[0].size + rSword <= 10) {    //能将对手的bomb全部夺取
+			takeInfo[1] = rBomb;
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
+			}
+			weapon[1].size += rBomb;
+			total += rBomb;
+		}
+		else if (  total + rBomb <= 10 && weapon[0].size + rSword > 10) {    //部分 对手的bomb夺取
+			takeInfo[1] = rBomb - (10 - weapon[1].size);
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
+			}
+			weapon[1].size += takeInfo[1];
+			total += takeInfo[1];
+		}
+		if (  total + rArrow <= 10 && weapon[2].size + rArrow <= 10) {    //能将对手的arrow全部夺取
+			takeInfo[2] = rArrow;
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
+			}
+			weapon[2].size += rArrow;
+			total += rArrow;
+		}
+		else if (  total + rArrow <= 10 && weapon[2].size + rArrow > 10) {    //只能夺取一部分arrow
+			takeInfo[2] = rArrow - (10 - weapon[2].size);
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
+			}
+			weapon[2].size += takeInfo[2];
+			total += takeInfo[2];
+		}
 	}
 	virtual void attack(Soldier* rival,int weaponId){}
 	virtual int* iniTake(Soldier* rival) { return takeInfo; }
@@ -303,8 +362,21 @@ public:
 			blueNumNinja--;
 		}
 	}
-	void attack(Soldier* rival) {      //ninja 使用bomb不会让自己受伤。
-
+	void attack(Soldier* rival,int weaponId) {      //ninja 使用bomb不会让自己受伤。
+		if (weaponId == 0) {        //用剑攻击
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+		}
+		else if (weaponId == 1) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			weapon[1].use();
+		}
+		else if (weaponId == 2) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			weapon[2].use();
+		}
 	}
 };
 int Ninja::redNumNinja = 0;
@@ -334,8 +406,23 @@ public:
 			blueNumIceman--;
 		}
 	}
-	void attack(Soldier* rival) {
-
+	void attack(Soldier* rival, int weaponId) {
+		if (weaponId == 0) {        //用剑攻击
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+		}
+		else if (weaponId == 1) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			thisForce /= 2;
+			hurt(thisForce);
+			weapon[1].use();
+		}
+		else if (weaponId == 2) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			weapon[2].use();
+		}
 	}
 };
 int Iceman::redNumIceman = 0;
@@ -373,8 +460,23 @@ public:
 	void setLoyalty(int x) {
 		loyalty = x;
 	}
-	void attack(Soldier* rival) {
-
+	void attack(Soldier* rival, int weaponId) {
+		if (weaponId == 0) {        //用剑攻击
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+		}
+		else if (weaponId == 1) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			thisForce /= 2;
+			hurt(thisForce);
+			weapon[1].use();
+		}
+		else if (weaponId == 2) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			weapon[2].use();
+		}
 	}
 };
 int Lion::redNumLion = 0;
@@ -402,8 +504,23 @@ public:
 			blueNumWolf--;
 		}
 	}
-	void attack(Soldier* rival) {
-
+	void attack(Soldier* rival, int weaponId) {
+		if (weaponId == 0) {        //用剑攻击
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+		}
+		else if (weaponId == 1) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			thisForce /= 2;
+			hurt(thisForce);
+			weapon[1].use();
+		}
+		else if (weaponId == 2) {
+			int thisForce = force * weapon[weaponId].attack_effect / 10;
+			rival->hurt(thisForce);
+			weapon[2].use();
+		}
 	}
 	int* iniTake(Soldier* rival) {
 		for (auto i = 0; i < 3; i++) takeInfo[i] = 0;
@@ -416,11 +533,8 @@ public:
 		rArrow = rival->weapon[2].size;
 		if (total + rSword <= 10 && weapon[0].size+rSword <=10 ) {    //能将对手的sword全部夺取
 			takeInfo[0] = rSword;
-			vector<Weapon::Info>::iterator it;
-			it = weapon[0].mvecInfo.begin();
-			for (; it != weapon[0].mvecInfo.end(); it++) {
-				weapon[0].add( *it );
-				rival->weapon[0].sub();
+			for (auto i = 0; i < rSword;i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
 			}
 			weapon[0].size += rSword;
 			total += rSword;
@@ -428,12 +542,8 @@ public:
 		}
 		else if ( total + rSword <= 10 && weapon[0].size + rSword > 10) {    //只能夺取一部分
 			takeInfo[0] = rSword - (10 - weapon[0].size);
-			vector<Weapon::Info>::iterator it;
-			it = --(weapon[0].mvecInfo).end();
-			for (auto i = 0; i < takeInfo[0];i++) {
-				weapon[0].add(*it);
-				rival->weapon[0].sub();
-				it--;
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
 			}
 			weapon[0].size += takeInfo[0];
 			total += takeInfo[0];
@@ -441,11 +551,8 @@ public:
 		}
 		if (!taken &&  total + rBomb <= 10 && weapon[0].size + rSword <= 10) {    //能将对手的bomb全部夺取
 			takeInfo[1] = rBomb;
-			vector<Weapon::Info>::iterator it;
-			it = weapon[1].mvecInfo.begin();
-			for (; it != weapon[1].mvecInfo.end(); it++) {
-				weapon[1].add(*it);
-				rival->weapon[1].sub();
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
 			}
 			weapon[1].size += rBomb;
 			total += rBomb;
@@ -453,12 +560,8 @@ public:
 		}
 		else if (!taken && total + rBomb <= 10 && weapon[0].size + rSword > 10) {    //部分 对手的bomb夺取
 			takeInfo[1] = rBomb - (10 - weapon[1].size);
-			vector<Weapon::Info>::iterator it;
-			it = --weapon[1].mvecInfo.end();
-			for (auto i = 0; i < takeInfo[1]; i++) {
-				weapon[1].add(*it);
-				rival->weapon[1].sub();
-				it--;
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
 			}
 			weapon[1].size += takeInfo[1];
 			total += takeInfo[1];
@@ -466,11 +569,8 @@ public:
 		}
 		if (!taken && total + rArrow <= 10 && weapon[2].size + rArrow <= 10) {    //能将对手的arrow全部夺取
 			takeInfo[2] = rArrow;
-			vector<Weapon::Info>::iterator it;
-			it = weapon[2].mvecInfo.begin();
-			for (; it != weapon[2].mvecInfo.end(); it++) {
-				weapon[2].add(*it);
-				rival->weapon[2].sub();
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
 			}
 			weapon[2].size += rArrow;
 			total += rArrow;
@@ -478,12 +578,8 @@ public:
 		}
 		else if (!taken && total + rArrow <= 10 && weapon[2].size + rArrow > 10) {    //只能夺取一部分arrow
 			takeInfo[2] = rArrow - (10 - weapon[2].size);
-			vector<Weapon::Info>::iterator it;
-			it = --weapon[2].mvecInfo.end();
-			for (auto i = 0; i < takeInfo[2]; i++) {
-				weapon[2].add(*it);
-				rival->weapon[2].sub();
-				it--;
+			for (auto i = 0; i < rSword; i++) {
+				weapon[0].add(*(rival->weapon[0].sub()));
 			}
 			weapon[2].size += takeInfo[2];
 			total += takeInfo[2];
@@ -751,9 +847,11 @@ int main()
 							result = battle(*r_it, *b_it, 1);
 						}
 						if (result == 0) {     //红杀死蓝 
+							(*r_it)->take(*b_it);
 
 						}
 						else if (result == 1) {   //蓝杀死红
+							(*b_it)->take(*r_it);
 
 						}
 						else if (result == 2) {    //都活
