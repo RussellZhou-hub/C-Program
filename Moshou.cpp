@@ -42,29 +42,40 @@ class HeadQuarter {
 public:
 	static int redElement, blueElement;                 //司令部生命元
 	int color;                                     //0红1蓝
+	int nextGenerate;
 	int iniElement[5] = {0,0,0,0,0};
 	int iniForce[5]= { 0,0,0,0,0 };
+	bool stopGen = false;                   //是否停止制造
 	string indexToName[5] = { "dragon","ninja","iceman","lion","wolf" };
 	HeadQuarter(int col) {
 		color = col;
+		nextGenerate = 0;
 	}
 	int generate() {                 //返回-1表示停止制造
-		if (color == 0) {
+		if (!stopGen && color == 0) {
 			int order[5] = { 2,3,4,1,0 };          //红方司令部按照iceman、lion、wolf、ninja、dragon 的顺序制造武士。
-			for (auto i = 0; i < 5; i++) {
-				if (redElement - iniElement[order[i]] >= 0) {
-					redElement -= iniElement[order[i]];
-					return order[i];
-				}
+			if (redElement - iniElement[order[nextGenerate]] >= 0) {
+				redElement -= iniElement[order[nextGenerate]];
+				int tmp = nextGenerate;
+				nextGenerate = ++nextGenerate % 5;                   //下一次降生
+				return order[tmp];
+			}
+			else if (redElement - iniElement[order[nextGenerate]] < 0) {     //如果司令部中的生命元不足以制造某本该造的武士，那就从此停止制造武士。
+				stopGen = true;
+				return -1;
 			}
 		}
-		else {
+		else if(!stopGen && color==1){
 			int order[5] = { 3,0,1,2,4 };     //蓝方司令部按照lion、dragon、ninja、iceman、wolf 的顺序制造武士。
-			for (auto i = 0; i < 5; i++) {
-				if (blueElement - iniElement[order[i]] >= 0) {
-					blueElement -= iniElement[order[i]];
-					return order[i];
-				}
+			if (blueElement - iniElement[order[nextGenerate]] >= 0) {
+				blueElement -= iniElement[order[nextGenerate]];
+				int tmp = nextGenerate;
+				nextGenerate = ++nextGenerate % 5;                   //下一次降生
+				return order[tmp];
+			}
+			else if (blueElement - iniElement[order[nextGenerate]] < 0) {     //如果司令部中的生命元不足以制造某本该造的武士，那就从此停止制造武士。
+				stopGen = true;
+				return -1;
 			}
 		}
 		return -1;
@@ -438,6 +449,7 @@ public:
 		}
 		else {
 			blueNumLion++;
+			loyalty = lo;
 		}
 		index = 3;
 		int weaponID = id % 3;   //编号为n的lion降生时即获得编号为n%3 的武器
