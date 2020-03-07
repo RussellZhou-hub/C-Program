@@ -731,14 +731,19 @@ int main()
 						allSoldier.erase(tmp_it);
 					}
 				}
-				for (; S_it != allSoldier.end(); S_it++) {                          
+				S_it = allSoldier.begin();
+				for (; S_it != allSoldier.end();) {                          
 					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <= 0 && (*S_it)->color == 1 && (*S_it)->city != 0) {        //不在对方司令部，忠诚度<=0
 						cout << timeToString(minute) << " blue lion " << (*S_it)->id << " ran away\n";
 						vector<Soldier*>::iterator tmp_it;
 						tmp_it = S_it;
+						S_it++;
 						(*tmp_it)->~Soldier();
-						allSoldier.erase(tmp_it);
+						allSoldier.erase(tmp_it);                           
+						//if (S_it == allSoldier.end() || allSoldier.size() == 0) break;
+						//      有bug
 					}
+					else S_it++;
 				}
 			}
 			if (minute % 60 == 10) {             //前进
@@ -746,22 +751,19 @@ int main()
 				vector<Soldier*>::iterator S_it;
 				S_it = allSoldier.begin();
 				for (; S_it != allSoldier.end(); S_it++) {
-					if ((*S_it)->city != N + 1 && (*S_it)->reachHeadQ==false ) {      //还没到对方司令部
+					if ((*S_it) ->color==0 && (*S_it)->city != N + 1 && (*S_it)->reachHeadQ==false ) {      //red还没到对方司令部
 						(*S_it)->city++;
+						if ((*S_it)->city == N + 1) (*S_it)->reachHeadQ = true;
 						if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
 						if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 					}
-				}
-				allSoldier.assign(allSoldier.begin(),allSoldier.end());
-				S_it = allSoldier.begin();
-				for (; S_it != allSoldier.end(); S_it++) {
-					if ((*S_it)->city != 0 && (*S_it)->reachHeadQ == false ) {      //还没到对方司令部
+					else if ((*S_it)->color == 1 && (*S_it)->city != 0 && (*S_it)->reachHeadQ == false) {      //blue还没到对方司令部
 						(*S_it)->city--;
+						if ((*S_it)->city == 0) (*S_it)->reachHeadQ = true;
 						if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
 						if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 					}
 				}
-				allSoldier.insert(allSoldier.end(),allSoldier.begin(), allSoldier.end());
 				sort(allSoldier.begin(), allSoldier.end(), myLess);        //前进完后排序
 				S_it = allSoldier.begin();
 				for (; S_it != allSoldier.end(); S_it++) {
