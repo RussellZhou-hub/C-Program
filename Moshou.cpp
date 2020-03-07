@@ -146,9 +146,8 @@ public:
 	}
 	vector<Info>::iterator sub() {         //优先减去没用过的
 		wSort();
-		mvecInfo.erase(--mvecInfo.end());
 		size--;
-		return --mvecInfo.end();
+		return --mvecInfo.erase(--mvecInfo.end());
 	}
 	void use() {
 		if (id == 1) {
@@ -722,26 +721,18 @@ int main()
 				LessByCity<Soldier*> myLess;
 				sort(allSoldier.begin(), allSoldier.end(), myLess);          //先排序
 				S_it = allSoldier.begin();
-				for (; S_it != allSoldier.end(); S_it++) {
+				for (; S_it != allSoldier.end(); ) {
 					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <=0 && (*S_it) ->color==0 && (*S_it)->city!=N+1 ) {                 //不在对方司令部，忠诚度<=0
 						cout << timeToString(minute) << " red lion " << (*S_it)->id << " ran away\n";
-						vector<Soldier*>::iterator tmp_it;
-						tmp_it = S_it;
-						(*tmp_it)->~Soldier();
-						allSoldier.erase(tmp_it);
+						(*S_it)->~Soldier();
+						S_it = allSoldier.erase(S_it);
+						if (S_it == allSoldier.end()) break;
 					}
-				}
-				S_it = allSoldier.begin();
-				for (; S_it != allSoldier.end();) {                          
-					if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <= 0 && (*S_it)->color == 1 && (*S_it)->city != 0) {        //不在对方司令部，忠诚度<=0
+					else if ((*S_it)->index == 3 && (*S_it)->getLoyalty() <= 0 && (*S_it)->color == 1 && (*S_it)->city != 0) {        //不在对方司令部，忠诚度<=0
 						cout << timeToString(minute) << " blue lion " << (*S_it)->id << " ran away\n";
-						vector<Soldier*>::iterator tmp_it;
-						tmp_it = S_it;
-						S_it++;
-						(*tmp_it)->~Soldier();
-						allSoldier.erase(tmp_it);                           
-						//if (S_it == allSoldier.end() || allSoldier.size() == 0) break;
-						//      有bug
+						(*S_it)->~Soldier();
+						S_it = allSoldier.erase(S_it);
+						if (S_it == allSoldier.end()) break;
 					}
 					else S_it++;
 				}
@@ -787,13 +778,13 @@ int main()
 					}
 				}
 			}
-			if (minute % 60 == 35 && !gameover) {              //wolf抢夺武器
+			if (minute % 60 == 35 && !gameover && allSoldier.size()!=0) {              //wolf抢夺武器
 				LessByCity<Soldier*> myLess;
 				sort(allSoldier.begin(), allSoldier.end(), myLess);            //先排序 
 				vector<Soldier*>::iterator S_it,next_it,tmp_it;
 				S_it = allSoldier.begin();
 				next_it = S_it;
-				next_it++;
+				next_it++;        //bug
 				for (; S_it != --allSoldier.end(); S_it++,next_it++) {
 					if ((*S_it)->reachHeadQ == false && (*S_it)->city == (*next_it)->city && (*S_it)->color != (*next_it)->color) {     //具备战斗发生条件
 						if ((*S_it)->index == 4 && (*next_it)->index != 4 && (*S_it) ->getTotalWeaponNum()<10 ) {     //狼抢武器条件
@@ -830,14 +821,14 @@ int main()
 				}
 
 			}
-			if (minute % 60 == 40 && !gameover ) {              //战斗
+			if (minute % 60 == 40 && !gameover && allSoldier.size() != 0) {              //战斗
 				LessByCity<Soldier*> myLess;
 				sort(allSoldier.begin(), allSoldier.end(), myLess);            //先排序 
 				vector<Soldier*>::iterator S_it, next_it, tmp_it,r_it,b_it;
 				S_it = allSoldier.begin();
 				next_it = S_it;
 				next_it++;
-				for (; S_it != --allSoldier.end(); S_it++, next_it++) {
+				for (; S_it != --allSoldier.end() && S_it!= allSoldier.end(); S_it++, next_it++) {
 					if ((*S_it)->reachHeadQ == false && (*S_it)->city == (*next_it)->city && (*S_it)->color != (*next_it)->color) {     //具备战斗发生条件
 						int city = (*S_it)->city;
 						(*S_it)->weaponSort();
@@ -862,30 +853,59 @@ int main()
 							if ((*r_it)->index == 0) {
 								cout << timeToString(minute) <<" "<< (*r_it)->colorToName[(*r_it)->color] << " " << (*r_it)->indexToName[(*r_it)->index] << " "<< (*next_it)->id<<" yelled in city "<<city<<"\n";
 							}
+							(*b_it) ->~Soldier();
+							S_it = allSoldier.erase(b_it);
+							if (S_it == allSoldier.end()) break;
+							else {
+								next_it = S_it;
+								next_it++;
+								continue;
+							}
 						}
 						else if (result == 1) {   //蓝杀死红
 							(*b_it)->take(*r_it);
 							if ((*b_it)->index == 0) {
 								cout << timeToString(minute) << " " << (*b_it)->colorToName[(*b_it)->color] << " " << (*b_it)->indexToName[(*b_it)->index] << " " << (*next_it)->id << " yelled in city " << city << "\n";
 							}
+							(*r_it) ->~Soldier();
+							S_it = allSoldier.erase(r_it);
+							if (S_it == allSoldier.end()) break;
+							else {
+								next_it = S_it;
+								next_it++;
+								continue;
+							}
 						}
 						else if (result == 2) {    //都活
 							cout << timeToString(minute) << " both red " << (*r_it)->indexToName[(*r_it)->index] << " ";
 							cout<< (*r_it)->id << " and blue "<<(*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id <<" were alive in city " << city << "\n";
+							if (next_it == --allSoldier.end()) break;
+							else {
+								S_it = next_it;
+								S_it++;
+								next_it = S_it;
+								next_it++;
+								continue;
+							}
 						}
 						else if (result == -1) {    //都死
 							cout << timeToString(minute) << " both red " << (*r_it)->indexToName[(*r_it)->index] << " " << (*r_it)->id << " and blue ";
 							cout << (*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id << " died in city " << city << "\n";
 							(*b_it) ->~Soldier();
 							(*r_it) ->~Soldier();
-							allSoldier.erase(b_it);
-							allSoldier.erase(r_it);
+							if (next_it == (--allSoldier.end())) {
+								allSoldier.erase(b_it);
+								allSoldier.erase(r_it);
+								break;
+							}
+							else {
+								allSoldier.erase(S_it);
+								S_it = allSoldier.erase(next_it);
+								next_it = S_it;
+								next_it++;
+								continue;
+							}
 						}
-
-						tmp_it = next_it;
-						tmp_it++;
-						if (tmp_it == --allSoldier.end()) break;
-						else S_it++, next_it++;        //本次循环后移2位
 					}
 
 
