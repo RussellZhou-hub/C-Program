@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 #include<set>
 
 
@@ -122,6 +123,7 @@ public:
 		if (id_tmp == 2) {
 			attack_effect = 3;
 		}
+		id = id_tmp;
 	}
 	void gain() {                     //获得武器时
 		if (id == 0) {
@@ -144,10 +146,10 @@ public:
 		mvecInfo.push_back(newWeapon);
 		size++;
 	}
-	vector<Info>::iterator sub() {         //优先减去没用过的
+	void sub() {         //优先减去没用过的
 		wSort();
 		size--;
-		return --mvecInfo.erase(--mvecInfo.end());
+		mvecInfo.erase(--mvecInfo.end());     //bug
 	}
 	void use() {
 		if (id == 1) {
@@ -200,8 +202,8 @@ public:
 		force = f;
 	}
 	virtual ~Soldier() {
-		if (color == 0) redNumSoldier--;
-		else blueNumSoldier--;
+		// if (color == 0) redNumSoldier--;
+		// else blueNumSoldier--;
 	}
 	int getTotalWeaponNum() {                //总共几件武器
 		int size=0;
@@ -232,50 +234,58 @@ public:
 		if (total + rSword <= 10 && weapon[0].size + rSword <= 10) {    //能将对手的sword全部夺取
 			takeInfo[0] = rSword;
 			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+				weapon[0].add(*(--rival->weapon[0].mvecInfo.end()));
+				rival->weapon[0].sub();
 			}
-			weapon[0].size += rSword;
 			total += rSword;
 		}
-		else if (total + rSword <= 10 && weapon[0].size + rSword > 10) {    //只能夺取一部分
-			takeInfo[0] = rSword - (10 - weapon[0].size);
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+		else if (weapon[0].size<10 && weapon[0].size + rSword > 10) {    //只能夺取一部分
+			takeInfo[0] =0 ;
+			for (auto i = 0; i < rSword - (10 - weapon[0].size); i++) {
+				weapon[0].add(*(--rival->weapon[0].mvecInfo.end()));
+				rival->weapon[0].sub();
+				total++;
+				takeInfo[0]++;
+				if (total == 10 || weapon[0].size == 10) break;
 			}
-			weapon[0].size += takeInfo[0];
-			total += takeInfo[0];
 		}
-		if (  total + rBomb <= 10 && weapon[0].size + rSword <= 10) {    //能将对手的bomb全部夺取
+		if (  total + rBomb <= 10 && weapon[1].size + rBomb <= 10) {    //能将对手的bomb全部夺取
 			takeInfo[1] = rBomb;
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+			for (auto i = 0; i < takeInfo[1]; i++) {
+				vector<Weapon::Info>::iterator it;
+				it = rival->weapon[1].mvecInfo.end();
+				weapon[1].add(*(--it));
+				rival->weapon[1].sub();
 			}
-			weapon[1].size += rBomb;
 			total += rBomb;
 		}
-		else if (  total + rBomb <= 10 && weapon[0].size + rSword > 10) {    //部分 对手的bomb夺取
-			takeInfo[1] = rBomb - (10 - weapon[1].size);
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+		else if (weapon[1].size < 10 && weapon[1].size + rBomb > 10) {    //只能夺取一部分
+			takeInfo[0] = 0;
+			for (auto i = 0; i < rBomb - (10 - weapon[1].size); i++) {
+				weapon[1].add(*(--rival->weapon[1].mvecInfo.end()));
+				rival->weapon[1].sub();
+				total++;
+				takeInfo[0]++;
+				if (total == 10 || weapon[1].size == 10) break;
 			}
-			weapon[1].size += takeInfo[1];
-			total += takeInfo[1];
 		}
 		if (  total + rArrow <= 10 && weapon[2].size + rArrow <= 10) {    //能将对手的arrow全部夺取
 			takeInfo[2] = rArrow;
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+			for (auto i = 0; i < takeInfo[2]; i++) {
+				weapon[2].add(*(--rival->weapon[2].mvecInfo.end()));
+				rival->weapon[2].sub();
 			}
-			weapon[2].size += rArrow;
 			total += rArrow;
 		}
-		else if (  total + rArrow <= 10 && weapon[2].size + rArrow > 10) {    //只能夺取一部分arrow
-			takeInfo[2] = rArrow - (10 - weapon[2].size);
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+		else if (weapon[2].size < 10 && weapon[2].size + rArrow > 10) {    //只能夺取一部分
+			takeInfo[0] = 0;
+			for (auto i = 0; i < rArrow - (10 - weapon[2].size); i++) {
+				weapon[2].add(*(--rival->weapon[2].mvecInfo.end()));
+				rival->weapon[2].sub();
+				total++;
+				takeInfo[0]++;
+				if (total == 10 || weapon[2].size == 10) break;
 			}
-			weapon[2].size += takeInfo[2];
-			total += takeInfo[2];
 		}
 	}
 	virtual void attack(Soldier* rival,int weaponId){}
@@ -539,58 +549,64 @@ public:
 		rSword = rival->weapon[0].size;
 		rBomb = rival->weapon[1].size;
 		rArrow = rival->weapon[2].size;
-		if (total + rSword <= 10 && weapon[0].size+rSword <=10 ) {    //能将对手的sword全部夺取
+		if (total + rSword <= 10 && weapon[0].size+rSword <=10 && rSword>0 ) {    //能将对手的sword全部夺取
 			takeInfo[0] = rSword;
 			for (auto i = 0; i < rSword;i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+				weapon[0].add(*(--rival->weapon[0].mvecInfo.end()));
+				rival->weapon[0].sub();
 			}
-			weapon[0].size += rSword;
 			total += rSword;
 			taken = true;
 		}
-		else if ( total + rSword <= 10 && weapon[0].size + rSword > 10) {    //只能夺取一部分
-			takeInfo[0] = rSword - (10 - weapon[0].size);
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+		else if (weapon[0].size<10 && weapon[0].size + rSword > 10) {    //只能夺取一部分
+			takeInfo[0] = 0;
+			for (auto i = 0; i < rSword - (10 - weapon[0].size); i++) {
+				weapon[0].add(*(--rival->weapon[0].mvecInfo.end()));
+				rival->weapon[0].sub();
+				total++;
+				takeInfo[0]++;
+				if (weapon[0].size == 10 || total == 10) break;
 			}
-			weapon[0].size += takeInfo[0];
-			total += takeInfo[0];
 			taken = true;
 		}
-		if (!taken &&  total + rBomb <= 10 && weapon[0].size + rSword <= 10) {    //能将对手的bomb全部夺取
+		if (!taken &&  total + rBomb <= 10 && weapon[1].size + rBomb <= 10 && rBomb>0) {    //能将对手的bomb全部夺取
 			takeInfo[1] = rBomb;
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+			for (auto i = 0; i < rBomb; i++) {
+				weapon[1].add(*(--rival->weapon[1].mvecInfo.end()));
+				rival->weapon[1].sub();
 			}
-			weapon[1].size += rBomb;
 			total += rBomb;
 			taken = true;
 		}
-		else if (!taken && total + rBomb <= 10 && weapon[0].size + rSword > 10) {    //部分 对手的bomb夺取
-			takeInfo[1] = rBomb - (10 - weapon[1].size);
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+		else if (!taken && weapon[1].size < 10 && weapon[1].size + rBomb > 10) {    //部分 对手的bomb夺取
+			takeInfo[1] =0 ;
+			for (auto i = 0; i < rBomb - (10 - weapon[1].size); i++) {
+				weapon[1].add(*(--rival->weapon[1].mvecInfo.end()));
+				rival->weapon[1].sub();
+				total++;
+				takeInfo[1]++;
+				if (weapon[1].size == 10 || total == 10) break;
 			}
-			weapon[1].size += takeInfo[1];
-			total += takeInfo[1];
 			taken = true;
 		}
-		if (!taken && total + rArrow <= 10 && weapon[2].size + rArrow <= 10) {    //能将对手的arrow全部夺取
+		if (!taken && total + rArrow <= 10 && weapon[2].size + rArrow <= 10 && rArrow>0 ) {    //能将对手的arrow全部夺取
 			takeInfo[2] = rArrow;
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+			for (auto i = 0; i < rArrow; i++) {
+				weapon[2].add(*(--rival->weapon[2].mvecInfo.end()));
+				rival->weapon[2].sub();
 			}
-			weapon[2].size += rArrow;
 			total += rArrow;
 			taken = true;
 		}
-		else if (!taken && total + rArrow <= 10 && weapon[2].size + rArrow > 10) {    //只能夺取一部分arrow
-			takeInfo[2] = rArrow - (10 - weapon[2].size);
-			for (auto i = 0; i < rSword; i++) {
-				weapon[0].add(*(rival->weapon[0].sub()));
+		else if (!taken && weapon[2].size < 10 && weapon[2].size + rArrow > 10) {    //部分 对手的bomb夺取
+			takeInfo[2] = 0;
+			for (auto i = 0; i < rArrow - (10 - weapon[2].size); i++) {
+				weapon[2].add(*(--rival->weapon[2].mvecInfo.end()));
+				rival->weapon[2].sub();
+				total++;
+				takeInfo[2]++;
+				if (weapon[2].size == 10 || total == 10) break;
 			}
-			weapon[2].size += takeInfo[2];
-			total += takeInfo[2];
 			taken = true;
 		}
 		return takeInfo;
@@ -618,42 +634,163 @@ void init() {
 
 int battle(Soldier* r, Soldier* b,int whoFirst) {          //战斗过程
 	if (whoFirst == 0) {
-		bool rAttacked = false, bAttacked = false;//本轮攻击结束标志
-		int rWeaponRound = 0, bWeaponRound = 0;
-		while (r->element > 0 && b->element > 0 && ( r->force>0 || b->force>0 ) && r->getTotalWeaponNum() > 0 && b->getTotalWeaponNum() > 0) {
+		int rWeaponRound = 0, bWeaponRound = 0;     
+		int checkRound;
+		int rCheck[3] = { 0,0,0 };
+		int bCheck[3] = { 0,0,0 };
+		int rSize[3] = { 0,0,0 };
+		int bSize[3] = { 0,0,0 };
+		int rElement, bElement;       //记录状态变化信息
+		bool bOut = false, rOut = false;
+		for (auto i = 0; i < 3; i++) {     //初始化一轮攻击可用武器次数
+			rSize[i] = r->weapon[i].size;
+			bSize[i] = b->weapon[i].size;
+		}
+		while (r->element > 0 && b->element > 0 && ( r->force>0 || b->force>0 ) && ( r->getTotalWeaponNum() > 0 || b->getTotalWeaponNum() > 0) ) {
+			rElement = r->element; 
+			bElement = b->element;//记录之前生命值
+			checkRound = rWeaponRound;
+			while (r->weapon[checkRound].size == 0) {              //检查武器是否全部用完，用完就标记
+				rSize[rWeaponRound] = r->weapon[rWeaponRound].size;
+				rWeaponRound = (++rWeaponRound) % 3;       //这种武器用完
+				rCheck[checkRound] = 1;
+				checkRound = (++checkRound) % 3;
+				rOut = true;
+				for (auto i = 0; i < 3; i++) {
+					if (rCheck[i] == 0) rOut = false;
+				}
+				if (rOut) break;
+			}
 			if (r->weapon[rWeaponRound].size > 0) {
 				r->attack(b, rWeaponRound);
-				rAttacked = true;
-				if (r->weapon[rWeaponRound].size == 0) rWeaponRound = (++rWeaponRound) % 3;       //这种武器用完
-				if (b->element <= 0) return 0;
+				rSize[rWeaponRound]--;   //本轮攻击该种武器可使用次数
+				if (r->weapon[rWeaponRound].size == 0|| rSize[rWeaponRound]==0) {
+					rSize[rWeaponRound] = r->weapon[rWeaponRound].size;
+					rWeaponRound = (++rWeaponRound) % 3;       //这种武器用完
+				}
+				if (b->element <= 0 && r->element>0) return 0;
+				else if (b->element > 0 && r->element <= 0) return 1;
+				else if (b->element <= 0 && r->element <= 0) return -1;
 			}
-			if (r->weapon[bWeaponRound].size > 0) {
-				r->attack(r, bWeaponRound);
-				bAttacked = true;
-				if (b->weapon[bWeaponRound].size == 0) bWeaponRound = (++bWeaponRound) % 3;       //这种武器用完
-				if (r->element <= 0) return 1;
+			checkRound = bWeaponRound;
+			while (b->weapon[checkRound].size == 0) {
+				bSize[bWeaponRound] = b->weapon[bWeaponRound].size;
+				bWeaponRound = (++bWeaponRound) % 3;       //这种武器用完
+				bCheck[checkRound] = 1;
+				checkRound = (++checkRound) % 3;
+				bOut = true;
+				for (auto i = 0; i < 3; i++) {
+					if (bCheck[i] == 0) bOut = false;
+				}
+				if (bOut) break;
 			}
+			if (b->weapon[bWeaponRound].size > 0) {
+				b->attack(r, bWeaponRound);
+				bSize[bWeaponRound]--;
+				if (b->weapon[bWeaponRound].size == 0|| bSize[bWeaponRound]==0) {
+					bSize[bWeaponRound] = b->weapon[bWeaponRound].size;
+					bWeaponRound = (++bWeaponRound) % 3;       //这种武器用完
+				}
+				if (b->element <= 0 && r->element > 0) return 0;
+				else if (b->element > 0 && r->element <= 0) return 1;
+				else if (b->element <= 0 && r->element <= 0) return -1;
+			}
+			if (rOut && bOut) break;
+			if (r->element == rElement && b->element == bElement && r->weapon[1].size == 0 &&
+				b->weapon[1].size == 0 && r->weapon[2].size == 0 && b->weapon[2].size == 0 &&
+				(r->force * r->weapon[0].attack_effect) / 10 <= 0 && (b->force * b->weapon[0].attack_effect) / 10 <= 0) break;
 		}
 		//战斗停止
 		if (r->element > 0 && b->element > 0) return 2;
 		else return -1;
 	}
 	else {
-		bool rAttacked = false, bAttacked = false;//本轮攻击结束标志
-
+		int rWeaponRound = 0, bWeaponRound = 0;
+		int checkRound;
+		int rCheck[3] = { 0,0,0 };
+		int bCheck[3] = { 0,0,0 };
+		int rSize[3] = { 0,0,0 };
+		int bSize[3] = { 0,0,0 };
+		int rElement, bElement;       //记录状态变化信息
+		bool bOut = false, rOut = false;
+		for (auto i = 0; i < 3; i++) {     //初始化一轮攻击可用武器次数
+			rSize[i] = r->weapon[i].size;
+			bSize[i] = b->weapon[i].size;
+		}
+		while (r->element > 0 && b->element > 0 && (r->force > 0 || b->force > 0) && ( r->getTotalWeaponNum() > 0 || b->getTotalWeaponNum() > 0 ) ) {
+			rElement = r->element;
+			bElement = b->element;//记录之前生命值
+			checkRound = bWeaponRound;
+			while (b->weapon[checkRound].size == 0) {
+				bSize[bWeaponRound] = b->weapon[bWeaponRound].size;
+				bWeaponRound = (++bWeaponRound) % 3;       //这种武器用完
+				bCheck[checkRound] = 1;
+				checkRound = (++checkRound) % 3;
+				bOut = true;
+				for (auto i = 0; i < 3; i++) {
+					if (bCheck[i] == 0) bOut = false;
+				}
+				if (bOut) break;
+			}
+			if (b->weapon[bWeaponRound].size > 0) {
+				b->attack(r, bWeaponRound);
+				bSize[bWeaponRound]--;
+				if (b->weapon[bWeaponRound].size == 0 || bSize[bWeaponRound] == 0) {
+					bSize[bWeaponRound] = b->weapon[bWeaponRound].size;
+					bWeaponRound = (++bWeaponRound) % 3;       //这种武器用完
+				}
+				if (b->element <= 0 && r->element > 0) return 0;
+				else if (b->element > 0 && r->element <= 0) return 1;
+				else if (b->element <= 0 && r->element <= 0) return -1;
+			}
+			checkRound = rWeaponRound;
+			while (r->weapon[checkRound].size == 0) {              //检查武器是否全部用完，用完就标记
+				rSize[rWeaponRound] = r->weapon[rWeaponRound].size;
+				rWeaponRound = (++rWeaponRound) % 3;       //防止一开始这种武器就是空
+				rCheck[checkRound] = 1;
+				checkRound = (++checkRound) % 3;
+				rOut = true;
+				for (auto i = 0; i < 3; i++) {
+					if (rCheck[i] == 0) rOut = false;
+				}
+				if (rOut) break;
+			}
+			if (r->weapon[rWeaponRound].size > 0) {
+				r->attack(b, rWeaponRound);
+				rSize[rWeaponRound]--;   //本轮攻击该种武器可使用次数
+				if (r->weapon[rWeaponRound].size == 0 || rSize[rWeaponRound] == 0) {
+					rSize[rWeaponRound] = r->weapon[rWeaponRound].size;
+					rWeaponRound = (++rWeaponRound) % 3;       //这种武器用完
+				}
+				if (b->element <= 0 && r->element > 0) return 0;
+				else if (b->element > 0 && r->element <= 0) return 1;
+				else if (b->element <= 0 && r->element <= 0) return -1;
+			}
+			if (rOut && bOut) break;
+			if (r->element == rElement && b->element == bElement && r->weapon[1].size == 0 &&
+				b->weapon[1].size == 0 && r->weapon[2].size == 0 && b->weapon[2].size == 0 &&
+				(r->force * r->weapon[0].attack_effect) / 10 <= 0 && (b->force * b->weapon[0].attack_effect) / 10 <= 0) break;
+		}
+		//战斗停止
+		if (r->element > 0 && b->element > 0) return 2;
+		else return -1;
 	}
 }
 
 int main()
 {
 	int n;
-	bool gameover;
-	cin >> n;
+	bool gameover;  /*
+	ofstream out("myOut.txt");
+	ifstream in("in.txt");
+	cin.rdbuf(in.rdbuf());
+	cout.rdbuf(out.rdbuf());      */
+	cin >> n;   
 
 	for (auto k = 1; k <= n; k++) {
 		init();
 		gameover = false;
-		cout << "Case:" << k << endl;
+		cout << "Case " << k <<":\n";
 		HeadQuarter redQuarter(0);
 		HeadQuarter blueQuarter(1);
 		vector<Soldier*> allSoldier;         //全部战士容器
@@ -672,7 +809,7 @@ int main()
 			redQuarter.iniForce[i] = tmp;
 			blueQuarter.iniForce[i] = tmp;
 		}
-		for (minute = 0; minute <= T; minute++) {       //计时器
+		for (minute = 0; minute <= T && !gameover ; minute++) {       //计时器
 			if (minute % 60 == 0) {             //整点触发事件,降生
 				int index;
 				index=redQuarter.generate();
@@ -745,13 +882,19 @@ int main()
 					if ((*S_it) ->color==0 && (*S_it)->city != N + 1 && (*S_it)->reachHeadQ==false ) {      //red还没到对方司令部
 						(*S_it)->city++;
 						if ((*S_it)->city == N + 1) (*S_it)->reachHeadQ = true;
-						if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
+						if ((*S_it)->index == 2) {
+							int sub = (*S_it)->element / 10;
+							(*S_it)->element = (*S_it)->element -sub;      //生命值减少
+						}
 						if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 					}
 					else if ((*S_it)->color == 1 && (*S_it)->city != 0 && (*S_it)->reachHeadQ == false) {      //blue还没到对方司令部
 						(*S_it)->city--;
 						if ((*S_it)->city == 0) (*S_it)->reachHeadQ = true;
-						if ((*S_it)->index == 2) (*S_it)->element = ((*S_it)->element * 9) / 10;      //生命值减少
+						if ((*S_it)->index == 2) {
+							int sub = (*S_it)->element / 10;
+							(*S_it)->element = (*S_it)->element - sub;      //生命值减少
+						}
 						if ((*S_it)->index == 3) (*S_it)->setLoyalty((*S_it)->getLoyalty() - K);     //忠诚减少
 					}
 				}
@@ -761,31 +904,29 @@ int main()
 					if ( (*S_it)->color==0 && (*S_it)->city != N + 1) {      //还没到对方司令部
 						cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 					}
-					else if ((*S_it)->color == 0 && (*S_it)->city == N + 1 && (*S_it)->reachHeadQ == false ) {
+					else if ((*S_it)->color == 0 && (*S_it)->city == N + 1 && (*S_it)->reachHeadQ == true ) {
 						cout << timeToString(minute) << " " << "red " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached blue headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 						cout << timeToString(minute) << " blue headquarter was taken\n";
-						(*S_it)->reachHeadQ = true;
 						gameover = true;
 					}
 					else if ((*S_it)->color == 1 && (*S_it)->city != 0) {     //还没到对方司令部
 						cout << timeToString(minute) << " " << "blue " << blueQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " marched to city " << (*S_it)->city << " with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 					}
-					else if ((*S_it)->color == 1 && (*S_it)->city == 0 && (*S_it)->reachHeadQ == false) {
-						cout << timeToString(minute) << " " << "blue " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached blue headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
+					else if ((*S_it)->color == 1 && (*S_it)->city == 0 && (*S_it)->reachHeadQ == true) {
+						cout << timeToString(minute) << " " << "blue " << redQuarter.indexToName[(*S_it)->index] << " " << (*S_it)->id << " reached red headquarter with " << (*S_it)->element << " elements and force " << (*S_it)->force << "\n";
 						cout << timeToString(minute) << " red headquarter was taken\n";
-						(*S_it)->reachHeadQ = true;
 						gameover = true;
 					}
 				}
 			}
-			if (minute % 60 == 35 && !gameover && allSoldier.size()!=0) {              //wolf抢夺武器
+			if (minute % 60 == 35 && !gameover && allSoldier.size()>=2) {              //wolf抢夺武器
 				LessByCity<Soldier*> myLess;
 				sort(allSoldier.begin(), allSoldier.end(), myLess);            //先排序 
 				vector<Soldier*>::iterator S_it,next_it,tmp_it;
 				S_it = allSoldier.begin();
 				next_it = S_it;
 				next_it++;        //bug
-				for (; S_it != --allSoldier.end(); S_it++,next_it++) {
+				for (; S_it != --allSoldier.end();) {
 					if ((*S_it)->reachHeadQ == false && (*S_it)->city == (*next_it)->city && (*S_it)->color != (*next_it)->color) {     //具备战斗发生条件
 						if ((*S_it)->index == 4 && (*next_it)->index != 4 && (*S_it) ->getTotalWeaponNum()<10 ) {     //狼抢武器条件
 							int* info;
@@ -798,7 +939,11 @@ int main()
 									cout << (*next_it)->id << " in city " << (*next_it)->city<<"\n";
 								}
 							}
-							
+							S_it = next_it;
+							S_it++;
+							if (S_it == allSoldier.end() || S_it == --allSoldier.end()) break;
+							next_it = S_it;
+							next_it++;
 						}
 						else if ((*S_it)->index != 4 && (*next_it)->index == 4 && (*next_it)->getTotalWeaponNum() < 10) {     //狼抢武器条件
 							int* info;
@@ -811,13 +956,15 @@ int main()
 									cout << (*S_it)->id << " in city " << (*S_it)->city << "\n";
 								}
 							}
+							S_it = next_it;
+							S_it++;
+							if (S_it == allSoldier.end() || S_it == --allSoldier.end()) break;
+							next_it = S_it;
+							next_it++;
 						}
-						tmp_it = next_it;
-						tmp_it++;
-						if (tmp_it == --allSoldier.end()) break;
-						else S_it++, next_it++;        //本次循环后移2位
+						else S_it++, next_it++;
 					}
-
+					else S_it++, next_it++;
 				}
 
 			}
@@ -828,7 +975,7 @@ int main()
 				S_it = allSoldier.begin();
 				next_it = S_it;
 				next_it++;
-				for (; S_it != --allSoldier.end() && S_it!= allSoldier.end(); S_it++, next_it++) {
+				for (; S_it != --allSoldier.end() && S_it!= allSoldier.end();) {
 					if ((*S_it)->reachHeadQ == false && (*S_it)->city == (*next_it)->city && (*S_it)->color != (*next_it)->color) {     //具备战斗发生条件
 						int city = (*S_it)->city;
 						(*S_it)->weaponSort();
@@ -850,8 +997,11 @@ int main()
 						}
 						if (result == 0) {     //红杀死蓝 
 							(*r_it)->take(*b_it);
+							cout << timeToString(minute) << " red " << (*r_it)->indexToName[(*r_it)->index] << " " << (*r_it)->id << " killed blue ";
+							cout << (*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id << " in city " << (*r_it)->city << " remaining " << (*r_it)->element << " elements\n";
+							//bug
 							if ((*r_it)->index == 0) {
-								cout << timeToString(minute) <<" "<< (*r_it)->colorToName[(*r_it)->color] << " " << (*r_it)->indexToName[(*r_it)->index] << " "<< (*next_it)->id<<" yelled in city "<<city<<"\n";
+								cout << timeToString(minute) << " " << (*r_it)->colorToName[(*r_it)->color] << " " << (*r_it)->indexToName[(*r_it)->index] << " " << (*r_it)->id << " yelled in city " << city<<"\n";
 							}
 							(*b_it) ->~Soldier();
 							S_it = allSoldier.erase(b_it);
@@ -864,8 +1014,10 @@ int main()
 						}
 						else if (result == 1) {   //蓝杀死红
 							(*b_it)->take(*r_it);
+							cout << timeToString(minute) << " blue " << (*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id << " killed red ";
+							cout << (*r_it)->indexToName[(*r_it)->index] << " " << (*r_it)->id << " in city " << (*r_it)->city << " remaining " << (*b_it)->element << " elements\n";
 							if ((*b_it)->index == 0) {
-								cout << timeToString(minute) << " " << (*b_it)->colorToName[(*b_it)->color] << " " << (*b_it)->indexToName[(*b_it)->index] << " " << (*next_it)->id << " yelled in city " << city << "\n";
+								cout << timeToString(minute) << " " << (*b_it)->colorToName[(*b_it)->color] << " " << (*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id << " yelled in city " << city<<"\n";
 							}
 							(*r_it) ->~Soldier();
 							S_it = allSoldier.erase(r_it);
@@ -879,10 +1031,17 @@ int main()
 						else if (result == 2) {    //都活
 							cout << timeToString(minute) << " both red " << (*r_it)->indexToName[(*r_it)->index] << " ";
 							cout<< (*r_it)->id << " and blue "<<(*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id <<" were alive in city " << city << "\n";
-							if (next_it == --allSoldier.end()) break;
+							if ((*r_it)->index == 0) {
+								cout << timeToString(minute) << " " << (*r_it)->colorToName[(*r_it)->color] << " " << (*r_it)->indexToName[(*r_it)->index] << " " << (*r_it)->id << " yelled in city " << city << "\n";
+							}
+							if ((*b_it)->index == 0) {
+								cout << timeToString(minute) << " " << (*b_it)->colorToName[(*b_it)->color] << " " << (*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id << " yelled in city " << city << "\n";
+							}
+							if (next_it == (--allSoldier.end()) || next_it == allSoldier.end()) break;
 							else {
 								S_it = next_it;
 								S_it++;
+								if (S_it == (--allSoldier.end()) || S_it == allSoldier.end()) break;
 								next_it = S_it;
 								next_it++;
 								continue;
@@ -893,22 +1052,23 @@ int main()
 							cout << (*b_it)->indexToName[(*b_it)->index] << " " << (*b_it)->id << " died in city " << city << "\n";
 							(*b_it) ->~Soldier();
 							(*r_it) ->~Soldier();
-							if (next_it == (--allSoldier.end())) {
+							if (next_it == (--allSoldier.end())|| next_it == allSoldier.end()) {
 								allSoldier.erase(b_it);
 								allSoldier.erase(r_it);
 								break;
 							}
 							else {
-								allSoldier.erase(S_it);
-								S_it = allSoldier.erase(next_it);
+								next_it=allSoldier.erase(S_it);
+								if (next_it == (--allSoldier.end()) || next_it == allSoldier.end()) break;
+								S_it = allSoldier.erase(next_it);           //bug
+								if (S_it == (--allSoldier.end()) || S_it == allSoldier.end()) break;
 								next_it = S_it;
 								next_it++;
 								continue;
 							}
 						}
 					}
-
-
+					else S_it++, next_it++;
 				}
 			}
 			if (minute % 60 == 50 && !gameover) {              //司令部报告生命元
@@ -927,7 +1087,6 @@ int main()
 					cout<< (*it_start)->weapon[0].size<< " sword "<< (*it_start)->weapon[1].size<<" bomb "<< (*it_start)->weapon[2].size<<" arrow and "<< (*it_start)->element<< " elements\n";
 				}
 			}
-
 		}
 	}
 	return 0;
